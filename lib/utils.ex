@@ -1,13 +1,14 @@
 defmodule Utils do
-
   import Binary
 
   # takes a hex-string and reverses it's endianness
   def reverse_endian(hex_string) do
-    {:ok, binary_string} = Base.decode16(hex_string, case: :lower) 
-    binary_string |>:binary.bin_to_list 
-    |> Enum.reverse 
-    |> :binary.list_to_bin 
+    {:ok, binary_string} = Base.decode16(hex_string, case: :lower)
+
+    binary_string
+    |> :binary.bin_to_list()
+    |> Enum.reverse()
+    |> :binary.list_to_bin()
     |> Base.encode16(case: :lower)
   end
 
@@ -17,7 +18,7 @@ defmodule Utils do
   end
 
   # calculates the block hash
-  def get_block_hash(block_header) do
+  def get_block_header_hash(block_header) do
     version = encode_integer(block_header[:version])
     previous_block = reverse_endian(block_header[:previous_block])
     merkle_root = reverse_endian(block_header[:merkle_root])
@@ -61,7 +62,7 @@ defmodule Utils do
   # expanding target to a 32 byte integer
   def target_to_value(target) do
     {target, _} = Integer.parse(target, 16)
-    {<<num>>, digits} = target |> Binary.from_integer |> split_at(1)
+    {<<num>>, digits} = target |> Binary.from_integer() |> split_at(1)
     digits
     |> trim_trailing
     |> pad_trailing(num)
@@ -71,30 +72,92 @@ defmodule Utils do
   def generate_tx(data) do
     {from, to, amount, private_key} = data
     tx = %{
-      :from => from,  # empty string if no from address
-      :to => to, 
+      # empty string if no from address
+      :from => from,
+      :to => to,
       :timestamp => :os.system_time(:seconds),
-      :amt => amount, 
+      :amt => amount,
       :signature => nil,
-      :coibase_flag => false}   # default is set to false, set to true when there is no :from address 
-    tx = Map.replace(tx, :signature,  sign(tx, private_key))
+      # default is set to false, set to true when there is no :from address 
+      :coinbase_flag => false
+    }
+
+    tx = Map.replace(tx, :signature, sign(tx, private_key))
     tx
   end
 
   # send the entire the tx block
   def sign(tx_block, private_key) do
-    msg = tx_block[:from] <> tx_block[:to] <> Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp]) 
-    msg = :crypto.hash(:sha256, msg)
-    signature = :crypto.sign(:ecdsa, :sha256, msg, [private_key, :secp256k1]) |> Base.encode16(case: :lower)
+    msg = hash_block_data(tx_block)
+    signature =
+      :crypto.sign(:ecdsa, :sha256, msg, [private_key, :secp256k1]) |> Base.encode16(case: :lower)
     signature
   end
 
-  def verify(tx_block) do
-    msg = tx_block[:from] <> tx_block[:to] <> Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+  # verifying the digital sign
+  def verify_sign(tx_block) do
+    msg =
+      tx_block[:from] <>
+        tx_block[:to] <>
+        Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
     msg = :crypto.hash(:sha256, msg)
     {:ok, signature} = tx_block[:signature] |> Base.decode16(case: :lower)
     {_, public_key} = :ets.lookup(:data, tx_block[:from])
     :crypto.verify(:ecdsa, :sha256, msg, signature, [public_key, :secp256k1])
   end
 
+  # dynamically calculate the current money from the blockchain
+  def calc_money(blockchain, address) do
+    current_money =
+      Enum.map(blockchain, fn block ->
+        cond do
+          block[:txn][:from] == address ->
+            -block[:txn][:amt]
+          block[:txn][:to] == address ->
+            block[:txn][:amt]
+          true ->
+            0
+        end
+      end)
+    Enum.sum(current_money)
+  end
+
+  # verifying the block before picking up txn
+  def verify_txn(tx_block) do
+    from_address = tx_block[:from]
+    {_, map} = :ets.lookup(:data, from_address)
+    pid = map[:pid]
+    state = Peer.get_state(pid)
+    blockchain = state[:blockchain]
+    money_available = calc_money(blockchain, from_address)
+    tx_block[:amt] >= money_available && verify_sign(tx_block)
+  end
+
+  # verify's the block
+  def verify_block(block) do
+    tx_block = block[:txn]
+    # calculate and check block data hash
+    msg = hash_block_data(tx_block) |> Base.encode16(case: :lower)
+    block_header = block[:header]
+    check_block_data_hash = (block_header[:merkle_root] == msg)
+    # now to check previous block data hash
+    recalculated_prev_hash = get_block_header_hash(block[:parent])
+    check_prev_hash = (recalculated_prev_hash == block_header[:previous_block])
+    # now verify the txn in the block
+    check_txn = verify_txn(tx_block)
+    # now verify the current block's hash
+    block_header_hash = get_block_header_hash(block_header)
+    check_block_header_hash = (block_header_hash == block[:hash])
+    check_block_data_hash && check_prev_hash && check_txn && check_block_header_hash
+  end
+
+  # function to hash block data (calc merkle root)
+  def hash_block_data(tx_block) do
+    msg =
+    tx_block[:from] <>
+      tx_block[:to] <>
+      Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+    msg = :crypto.hash(:sha256, msg)
+    msg
+  end
 end

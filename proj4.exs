@@ -3,6 +3,7 @@
 {numUsers, _} = Integer.parse(numUsers)
 {numTxnn, _} = Integer.parse(numTxn)
 
+# FORMAT - {walletaddress - {publicKey, pid}}
 data = :ets.new(:data, [:set, :named_table, :public])
 
 #create Genesis block
@@ -14,9 +15,12 @@ genesis_block = %{
     :timestamp => 1231006505,
     :bits => "1effffff",   # 4 leading zeroes
     :nonce => 0,
-  }
+  },
+  :parent => nil,
+  :hash => nil,
+  :txn => nil
 }
-
+ 
 
 mined_block_header = Utils.mine_block(genesis_block[:header])
 IO.inspect Utils.get_block_hash(mined_block_header)
