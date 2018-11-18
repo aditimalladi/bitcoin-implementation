@@ -69,6 +69,8 @@ defmodule Utils do
     |> to_integer
   end
 
+  # generates a new txn
+  # also posts the new txn into the pending pool
   def generate_tx(data) do
     {from, to, amount, private_key} = data
     tx = %{
@@ -81,8 +83,8 @@ defmodule Utils do
       # default is set to false, set to true when there is no :from address 
       :coinbase_flag => false
     }
-
     tx = Map.replace(tx, :signature, sign(tx, private_key))
+    Pool.put_txn(MyPool, tx)
     tx
   end
 
@@ -123,14 +125,19 @@ defmodule Utils do
   end
 
   # verifying the block before picking up txn
+  # in the current implementation Rewards txns are signed by the miner posting the reward/ collecting reward
   def verify_txn(tx_block) do
-    from_address = tx_block[:from]
-    {_, map} = :ets.lookup(:data, from_address)
-    pid = map[:pid]
-    state = Peer.get_state(pid)
-    blockchain = state[:blockchain]
-    money_available = calc_money(blockchain, from_address)
-    tx_block[:amt] >= money_available && verify_sign(tx_block)
+    if(tx_block[:coinbase_flag]) do
+      verify_sign(tx_block)
+    else
+      from_address = tx_block[:from]
+      {_, map} = :ets.lookup(:data, from_address)
+      pid = map[:pid]
+      state = Peer.get_state(pid)
+      blockchain = state[:blockchain]
+      money_available = calc_money(blockchain, from_address)
+      tx_block[:amt] >= money_available && verify_sign(tx_block)
+    end
   end
 
   # verify's the block

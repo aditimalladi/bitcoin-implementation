@@ -3,6 +3,9 @@
 {numUsers, _} = Integer.parse(numUsers)
 {numTxnn, _} = Integer.parse(numTxn)
 
+Pool.startlink([], name: MyPool)
+
+
 # FORMAT - {walletaddress - {publicKey, pid}}
 data = :ets.new(:data, [:set, :named_table, :public])
 
