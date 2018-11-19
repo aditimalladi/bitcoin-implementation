@@ -24,8 +24,12 @@ defmodule Pool do
   end
 
   def handle_call({:get_txn}, _from, state)do
-    [head | tail] = state
-    {:reply, head, tail}
+    if(state == [])do
+      {:reply, nil, state}
+    else
+      [head | tail] = state
+      {:reply, head, tail}
+    end
   end
 
 

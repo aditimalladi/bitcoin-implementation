@@ -81,12 +81,36 @@ defmodule Utils do
       :amt => amount,
       :signature => nil,
       # default is set to false, set to true when there is no :from address 
-      :coinbase_flag => false
+      :coinbase_flag => if from == "", do: true, else: false
     }
     tx = Map.replace(tx, :signature, sign(tx, private_key))
     Pool.put_txn(MyPool, tx)
     tx
   end
+
+
+  # function to generate a block from each txn
+  # each block contains ONE txn
+  def generate_block(txn, prev_block) do
+    # prev_block[:hash]
+    block = %{
+      :header => %{
+        :version => 1,
+        :previous_block => prev_block[:hash],
+        :merkle_root => hash_block_data(txn) |> Base.encode16(case: :lower),
+        :timestamp => :os.system_time(:seconds),
+        :bits => "1effffff",   # 4 leading zeroes
+        :nonce => 0,
+      },
+      :parent => prev_block[:header],
+      :hash => nil,
+      :txn => txn,
+      :coinbase_txn => nil
+    }
+    block
+  end
+
+
 
   # send the entire the tx block
   def sign(tx_block, private_key) do
@@ -166,5 +190,9 @@ defmodule Utils do
       Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
     msg = :crypto.hash(:sha256, msg)
     msg
+  end
+
+  def broadcast() do
+    
   end
 end
