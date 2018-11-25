@@ -17,6 +17,7 @@ defmodule Utils do
     <<n::signed-little-integer-size(32)>> |> Base.encode16(case: :lower)
   end
 
+  # TODO: check for errors
   # calculates the block hash
   def get_block_header_hash(block_header) do
     version = encode_integer(block_header[:version])
@@ -39,7 +40,8 @@ defmodule Utils do
 
   # recursive function to check mine the block
   def mine_block(block_header) do
-    block_hash = get_block_hash(block_header)
+    block_hash = get_block_header_hash(block_header)
+
     if check_target(block_hash, block_header[:bits]) do
       block_header
     else
@@ -52,6 +54,7 @@ defmodule Utils do
   def check_target(hash, target) do
     target_value = target_to_value(target)
     {hash_value, _} = Integer.parse(hash, 16)
+
     if hash_value < target_value do
       true
     else
@@ -63,6 +66,7 @@ defmodule Utils do
   def target_to_value(target) do
     {target, _} = Integer.parse(target, 16)
     {<<num>>, digits} = target |> Binary.from_integer() |> split_at(1)
+
     digits
     |> trim_trailing
     |> pad_trailing(num)
@@ -73,6 +77,7 @@ defmodule Utils do
   # also posts the new txn into the pending pool
   def generate_tx(data) do
     {from, to, amount, private_key} = data
+
     tx = %{
       # empty string if no from address
       :from => from,
@@ -81,13 +86,13 @@ defmodule Utils do
       :amt => amount,
       :signature => nil,
       # default is set to false, set to true when there is no :from address 
-      :coinbase_flag => if from == "", do: true, else: false
+      :coinbase_flag => if(from == "", do: true, else: false)
     }
+
     tx = Map.replace(tx, :signature, sign(tx, private_key))
     Pool.put_txn(MyPool, tx)
     tx
   end
-
 
   # function to generate a block from each txn
   # each block contains ONE txn
@@ -99,33 +104,39 @@ defmodule Utils do
         :previous_block => prev_block[:hash],
         :merkle_root => hash_block_data(txn) |> Base.encode16(case: :lower),
         :timestamp => :os.system_time(:seconds),
-        :bits => "1effffff",   # 4 leading zeroes
-        :nonce => 0,
+        # 4 leading zeroes
+        :bits => "1effffff",
+        :nonce => 0
       },
       :parent => prev_block[:header],
       :hash => nil,
       :txn => txn,
       :coinbase_txn => nil
     }
+
     block
   end
-
-
 
   # send the entire the tx block
   def sign(tx_block, private_key) do
     msg = hash_block_data(tx_block)
+
     signature =
       :crypto.sign(:ecdsa, :sha256, msg, [private_key, :secp256k1]) |> Base.encode16(case: :lower)
+
     signature
   end
 
   # verifying the digital sign
+
+  # TODO: Account for the case when from is = "" 
+  # cause ets lookup will not work
   def verify_sign(tx_block) do
     msg =
       tx_block[:from] <>
         tx_block[:to] <>
         Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+
     msg = :crypto.hash(:sha256, msg)
     {:ok, signature} = tx_block[:signature] |> Base.decode16(case: :lower)
     {_, public_key} = :ets.lookup(:data, tx_block[:from])
@@ -139,12 +150,15 @@ defmodule Utils do
         cond do
           block[:txn][:from] == address ->
             -block[:txn][:amt]
+
           block[:txn][:to] == address ->
             block[:txn][:amt]
+
           true ->
             0
         end
       end)
+
     Enum.sum(current_money)
   end
 
@@ -170,29 +184,29 @@ defmodule Utils do
     # calculate and check block data hash
     msg = hash_block_data(tx_block) |> Base.encode16(case: :lower)
     block_header = block[:header]
-    check_block_data_hash = (block_header[:merkle_root] == msg)
+    check_block_data_hash = block_header[:merkle_root] == msg
     # now to check previous block data hash
     recalculated_prev_hash = get_block_header_hash(block[:parent])
-    check_prev_hash = (recalculated_prev_hash == block_header[:previous_block])
+    check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
     # now verify the txn in the block
     check_txn = verify_txn(tx_block)
     # now verify the current block's hash
     block_header_hash = get_block_header_hash(block_header)
-    check_block_header_hash = (block_header_hash == block[:hash])
+    check_block_header_hash = block_header_hash == block[:hash]
     check_block_data_hash && check_prev_hash && check_txn && check_block_header_hash
   end
 
   # function to hash block data (calc merkle root)
   def hash_block_data(tx_block) do
     msg =
-    tx_block[:from] <>
-      tx_block[:to] <>
-      Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+      tx_block[:from] <>
+        tx_block[:to] <>
+        Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+
     msg = :crypto.hash(:sha256, msg)
     msg
   end
 
   def broadcast() do
-    
   end
 end
