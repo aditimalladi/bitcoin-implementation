@@ -3,10 +3,10 @@
 
 {numUsers, _} = Integer.parse(numUsers)
 {numTxn, _} = Integer.parse(numTxn)
+# 2 leading zeroes
 difficulty = "1fffffff"
 
 Pool.start_link([], name: MyPool)
-
 
 # FORMAT - {walletaddress - {publicKey, pid}}
 data = :ets.new(:data, [:set, :named_table, :public])
@@ -20,7 +20,7 @@ genesis_block = %{
     :previous_block => "6a275a8bd87fbdf78d4a7ecf9f65d8d21ba7b34f327a1594553a449ff0403627",
     :merkle_root => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
     :timestamp => 1231006505,
-    :bits => "1fffffff",   # 2 leading zeroes
+    :bits => difficulty,   
     :nonce => 0,
   },
   :hash => nil,
@@ -40,7 +40,6 @@ pids = list_of_users ++ [miner_pid]
 
 # mine the genesis block
 Peer.mine_genesis_block(miner_pid, genesis_block)
-IO.puts "Mining Genesis Block..."
 :timer.sleep(5000)
 
 # first everyone needs to mine empty blocks
@@ -58,21 +57,12 @@ Enum.each(0..numTxn - 1, fn(txn)->
   :timer.sleep(200)
 end)
 
+:timer.sleep(500)
 
-# IO.puts "Creating Capital..."
-# Peer.mint_money(user1)
-# :timer.sleep(2000)
-# # Peer.mint_money(user2)
-# [{_, wallet_add_user2}] = :ets.lookup(:pid_stash, user2)
-# :timer.sleep(2000)
-# IO.puts "I am sending money now..."
-# Peer.create_txn(user1, {wallet_add_user2, 50})
+miner_state = Peer.get_state(miner_pid)
+blockchain_length = length(miner_state[:blockchain])
 
-# :timer.sleep(2000)
-# IO.puts "I am sending money now..."
-# Peer.create_txn(user1, {wallet_add_user2, 50})
+IO.puts "Blockchain length: #{blockchain_length}"
+IO.puts "#{numTxn} transactions carried out. Ciao!"
 
-# :timer.sleep(5000)
-# IO.puts "Check now"
-
-:timer.sleep(1000000)
+# :timer.sleep(1000000)

@@ -46,6 +46,7 @@ defmodule BitcoinImplementationTest do
     pid_stash = :ets.new(:pid_stash, [:set, :named_table, :public])
     numUsers = 2
     numTxn = 1
+    # 2 leading zeroes
     difficulty = "1fffffff"
 
     genesis_block = %{
@@ -54,7 +55,7 @@ defmodule BitcoinImplementationTest do
         :previous_block => "6a275a8bd87fbdf78d4a7ecf9f65d8d21ba7b34f327a1594553a449ff0403627",
         :merkle_root => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
         :timestamp => 1231006505,
-        :bits => "1fffffff",   # 4 leading zeroes
+        :bits => difficulty,
         :nonce => 0,
       },
       :parent => %{
@@ -62,7 +63,7 @@ defmodule BitcoinImplementationTest do
         :previous_block => "0000000000000000000000000000000000000000000000000000000000000001",
         :merkle_root => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
         :timestamp => 1231006505,
-        :bits => "1fffffff",   # 4 leading zeroes
+        :bits => difficulty,
         :nonce => 0,
       },
       :hash => nil,

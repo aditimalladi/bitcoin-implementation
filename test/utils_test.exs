@@ -43,7 +43,9 @@ defmodule WorkerTest do
 
   describe "Generate Block" do
     test "Generate Block" do
-      # new_block = Utils.generate_block(txn, block)
+      # 2 leading zeroes
+      difficulty = "1fffffff"
+      
       tx = %{
         amt: 10,
         coinbase_flag: true,
@@ -60,8 +62,7 @@ defmodule WorkerTest do
           :previous_block => "0000000000000000000000000000000000000000000000000000000000000000",
           :merkle_root => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
           :timestamp => 1_231_006_505,
-          # 4 leading zeroes
-          :bits => "1effffff",
+          :bits => difficulty,
           :nonce => 0
         },
         :parent => nil,
@@ -79,7 +80,7 @@ defmodule WorkerTest do
       }
 
       # generate a new block
-      new_block = Utils.generate_block(tx, prev_block, coinbase_txn)
+      new_block = Utils.generate_block(tx, prev_block, coinbase_txn, difficulty)
       # IO.inspect new_block
       # remove the timestamp from the block as that will be real time and can change.
       header = new_block[:header]
@@ -101,14 +102,6 @@ defmodule WorkerTest do
           merkle_root: "13ddcccdfe3529825ca85c176d74b11bd86f82a46733278ac6599ef2c374f260",
           nonce: 0,
           previous_block: nil,
-          version: 1
-        },
-        parent: %{
-          bits: "1effffff",
-          merkle_root: "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
-          nonce: 0,
-          previous_block: "0000000000000000000000000000000000000000000000000000000000000000",
-          timestamp: 1231006505,
           version: 1
         },
         txn: %{

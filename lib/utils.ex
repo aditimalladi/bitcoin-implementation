@@ -3,12 +3,10 @@ defmodule Utils do
 
   # takes a hex-string and reverses it's endianness
   def reverse_endian(hex_string) do
-    if(hex_string == nil)do
-      IO.inspect hex_string
-      IO.puts "WHAT THE SHIT"
-    end
+    # if(hex_string == nil)do
+    #   IO.inspect hex_string
+    # end
     {:ok, binary_string} = hex_string |> Base.decode16(case: :lower)
-
     binary_string
     |> :binary.bin_to_list()
     |> Enum.reverse()
@@ -18,32 +16,18 @@ defmodule Utils do
 
   # takes an integer, zero pads to 32 bits, reverse endianness and converts to hex
   def encode_integer(n) do
-    # IO.puts "Encode Integer"
-    # IO.inspect n
     <<n::signed-little-integer-size(32)>> |> Base.encode16(case: :lower)
   end
 
-  # TODO: check for errors
   # calculates the block hash
   def get_block_header_hash(block_header) do
-    # IO.puts "In get_block _header_hash"
-    # IO.inspect block_header
-    # IO.inspect block_header[:version]
-    version = encode_integer(1)
-    # IO.puts "In #1"
-    # IO.inspect block_header[:version]
-
-    # IO.inspect block_header[:previous_block]
+    version = encode_integer(block_header[:version])
     previous_block = reverse_endian(block_header[:previous_block])
     merkle_root = reverse_endian(block_header[:merkle_root])
     timestamp = encode_integer(block_header[:timestamp])
-    # IO.puts "In #2"
-    # IO.inspect block_header[:timestamp]
     # bits is the difficulty
     bits = reverse_endian(block_header[:bits])
     nonce = encode_integer(block_header[:nonce])
-    # IO.puts "In #3"
-    # IO.inspect block_header[:nonce]
     # data to be hashed to get the current block hash
     message = version <> previous_block <> merkle_root <> timestamp <> bits <> nonce
     # covert the data into binary format
@@ -56,11 +40,7 @@ defmodule Utils do
   end
 
   # recursive function to check mine the block
-  def mine_block(block_header, p \\ false) do
-    if p do
-      IO.puts "Mining!"
-      IO.inspect block_header
-    end
+  def mine_block(block_header) do
     block_hash = get_block_header_hash(block_header)
 
     if check_target(block_hash, block_header[:bits]) do
@@ -116,9 +96,7 @@ defmodule Utils do
 
   # function to generate a block from each txn
   # each block contains ONE txn
-  def generate_block(txn, prev_block, coinbase_txn) do
-    # IO.inspect prev_block[:hash]
-    # prev_block[:hash]
+  def generate_block(txn, prev_block, coinbase_txn, difficulty) do
     block = %{
       :header => %{
         :version => 1,
@@ -126,14 +104,13 @@ defmodule Utils do
         :merkle_root => hash_block_data(txn, coinbase_txn) |> Base.encode16(case: :lower),
         :timestamp => :os.system_time(:seconds),
         # 2 leading zeroes
-        :bits => "1fffffff",
+        :bits => difficulty,
         :nonce => 0
       },
       :hash => nil,
       :txn => txn,
       :coinbase_txn => coinbase_txn
     }
-    # IO.inspect block
     block
   end
 
@@ -146,17 +123,9 @@ defmodule Utils do
     signature
   end
 
-  # verifying the digital sign
-
-  # TODO: Account for the case when from is = "" 
-  # cause ets lookup will not work
+  # verifying the digital signature
   def verify_sign(tx_block) do
     msg = hash_txn_data(tx_block)
-      # tx_block[:from] <>
-      #   tx_block[:to] <>
-      #   Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
-
-    # msg = :crypto.hash(:sha256, msg)
     {:ok, signature} = tx_block[:signature] |> Base.decode16(case: :lower)
     [{_, map}] = :ets.lookup(:data, tx_block[:from])
     public_key = map[:public_key]
@@ -191,8 +160,6 @@ defmodule Utils do
       from_address = tx_block[:from]
       [{_, map}] = :ets.lookup(:data, from_address)
       pid = map[:pid]
-      # state = Peer.get_state(pid)
-      # blockchain = state[:blockchain]
       money_available = calc_money(blockchain, from_address)
       tx_block[:amt] >= money_available && verify_sign(tx_block)
   end
@@ -214,10 +181,6 @@ end
       # now verify the current block's hash
       block_header_hash = get_block_header_hash(block_header)
       check_block_header_hash = block_header_hash == block[:hash]
-      # IO.puts "Printing all the boolean values"
-      # IO.inspect check_block_data_hash
-      # IO.inspect check_prev_hash
-      # IO.inspect check_block_header_hash
       check_block_data_hash && check_prev_hash && check_block_header_hash
     else
       msg = hash_block_data(tx_block, block[:coinbase_txn]) |> Base.encode16(case: :lower)
@@ -250,8 +213,6 @@ end
     if (tx_block == nil) do
       hash_txn_data(coinbase_txn)
     else
-      # IO.puts "Inside the hash_blcok_data"
-      # IO.inspect tx_block
       msg1 =
       tx_block[:from] <>
         tx_block[:to] <>
@@ -267,15 +228,10 @@ end
     end
   end
 
-  # FORMAT - {walletaddress - {publicKey, pid}}
   def broadcast(block)do
-    IO.puts "Broadcast"
+    IO.puts "Broadcasting the mined block"
     [{_, pids}] = :ets.lookup(:data, :pids)
-    # IO.puts "Keys"
-    # IO.inspect pids
     Enum.each(pids, fn pid ->
-      IO.puts "Broadcast Repeated"
-      # {wallet_address, %{:pid => pid, :public_key => public_key}} = :ets.lookup(:data, key)
       if(!(pid == self())) do
         Peer.add_block(pid, block)
       end
@@ -283,25 +239,20 @@ end
   end
 
   def broadcast_genesis(block)do
-    IO.puts "Broadcast - Genesis"
+    IO.puts "Broadcasting Genesis block"
     [{_, pids}] = :ets.lookup(:data, :pids)
-    # IO.puts "Keys"
-    # IO.inspect pids
     Enum.each(pids, fn pid ->
-      IO.puts "Broadcast Genesis Repeated"
-      # {wallet_address, %{:pid => pid, :public_key => public_key}} = :ets.lookup(:data, key)
       if(!(pid == self())) do
         Peer.add_genesis_block(pid, block)
       end
     end)
   end
 
-  def key_stream(table_name) do
-    Stream.resource(
-      fn -> :ets.first(table_name) end,
-      fn :"$end_of_table" -> {:halt, nil}
-         previous_key -> {[previous_key], :ets.next(table_name, previous_key)} end,
-      fn _ -> :ok end)
-  end
-
+  # def key_stream(table_name) do
+  #   Stream.resource(
+  #     fn -> :ets.first(table_name) end,
+  #     fn :"$end_of_table" -> {:halt, nil}
+  #        previous_key -> {[previous_key], :ets.next(table_name, previous_key)} end,
+  #     fn _ -> :ok end)
+  # end
 end
