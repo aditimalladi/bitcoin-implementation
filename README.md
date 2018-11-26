@@ -35,11 +35,11 @@ The hashing of the block header is done in the same manner as the Bitcoin Protoc
 * **Mining** - 
 Bitcoin Mining is a peer-to-peer computer process used to secure and verify bitcoin transactions—payments from one user to another on a decentralized network. Mining involves adding bitcoin transaction data to Bitcoin's global public ledger of past transactions. Each group of transactions is called a block. Blocks are secured by Bitcoin miners and build on top of each other forming a chain. This ledger of past transactions is called the blockchain. The blockchain serves to confirm transactions to the rest of the network as having taken place. Bitcoin nodes use the blockchain to distinguish legitimate Bitcoin transactions from attempts to re-spend coins that have already been spent elsewhere.
 
-**Mining Procedure in current project** - 
-The miner continously polls the transaction pool. Once the miner picks up a transaction, it creates a new block, add a new coinbase tranaction and mine the new block.
-Before proceeding to mine the new picked up transaction the miner **verifies the transaction** to ensure that the user sending the money has the minimum required resources. 
-Once this new block is mined it is then broadcasted to the entire peer network. 
-Each Peer who receives the broadcast message, verifies the block and **only then** adds it to it's own copy of the blockchan, dropping those blocks for which the verification fails.
+  **Mining Procedure in current project** - 
+  The miner continously polls the transaction pool. Once the miner picks up a transaction, it creates a new block, add a new coinbase         tranaction and mine the new block.
+  Before proceeding to mine the new picked up transaction the miner **verifies the transaction** to ensure that the user sending the money   has the minimum required resources. 
+  Once this new block is mined it is then broadcasted to the entire peer network. 
+  Each Peer who receives the broadcast message, verifies the block and **only then** adds it to it's own copy of the blockchan, dropping     those blocks for which the verification fails.
 
 **OVERALL PROCEDURE:**
 * We have an inital Genesis Block.
