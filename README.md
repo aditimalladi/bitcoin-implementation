@@ -73,7 +73,7 @@ This is a way expend Compute Resources and mine coins.
 ## IMPLEMENTED STRUCTURES
 
 ### BLOCK STRUCTURE
-
+```
 ********************************************
 *                                          *
 *                 HEADER                   *
@@ -91,9 +91,11 @@ This is a way expend Compute Resources and mine coins.
 *          COINBASE TRANSACTION            *
 *                                          *
 ********************************************
+```
 
 ### BLOCK HEADER STRUCTURE
 
+```
 ********************************************
 *                                          *
 *                 VERSION                  *
@@ -119,9 +121,11 @@ This is a way expend Compute Resources and mine coins.
 *                  NONCE                   *
 *                                          *
 ********************************************
+```
 
 ### TRANSACTION STRUCTURE
 
+```
 ********************************************
 *                                          *
 *            FROM WALLET ADDRESS           *
@@ -147,7 +151,7 @@ This is a way expend Compute Resources and mine coins.
 *               COINBASE FLAG              *
 *                                          *
 ********************************************
-
+```
 
 ## Getting Started with the Project ...
 
