@@ -57,12 +57,11 @@ Enum.each(0..numTxn - 1, fn(txn)->
   :timer.sleep(200)
 end)
 
-:timer.sleep(500)
+IO.puts "Waiting for latest blockchain propogation"
+:timer.sleep(10000)
 
 miner_state = Peer.get_state(miner_pid)
 blockchain_length = length(miner_state[:blockchain])
 
 IO.puts "Blockchain length: #{blockchain_length}"
 IO.puts "#{numTxn} transactions carried out. Ciao!"
-
-# :timer.sleep(1000000)
