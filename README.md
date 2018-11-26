@@ -65,6 +65,6 @@ Percentage | Module
 -----------|-----------------------
    100.00% | Pool
    100.00% | BitcoinImplementation
-    98.44% | Peer
-    93.20% | Utils
-    95.43% | Total
+   98.44%  | Peer
+   93.20%  | Utils
+   95.43%  | Total
