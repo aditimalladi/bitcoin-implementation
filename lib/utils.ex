@@ -125,7 +125,7 @@ defmodule Utils do
         :previous_block => prev_block[:hash],
         :merkle_root => hash_block_data(txn, coinbase_txn) |> Base.encode16(case: :lower),
         :timestamp => :os.system_time(:seconds),
-        # 4 leading zeroes
+        # 2 leading zeroes
         :bits => "1fffffff",
         :nonce => 0
       },
@@ -295,10 +295,6 @@ end
       end
     end)
   end
-
-
-
-
 
   def key_stream(table_name) do
     Stream.resource(

@@ -20,7 +20,7 @@ genesis_block = %{
     :previous_block => "6a275a8bd87fbdf78d4a7ecf9f65d8d21ba7b34f327a1594553a449ff0403627",
     :merkle_root => "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
     :timestamp => 1231006505,
-    :bits => "1fffffff",   # 4 leading zeroes
+    :bits => "1fffffff",   # 2 leading zeroes
     :nonce => 0,
   },
   :hash => nil,
