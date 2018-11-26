@@ -20,8 +20,7 @@ In the current project the following components are working:
   },
   :parent => nil,
   :hash => nil,
-  :txn => nil
-}
+  :txn => nil}
 
 * One Miner is initialsed, who can check and mine any pending transactions
 
@@ -38,6 +37,7 @@ This is a way expend Compute Resources and mine coins.
 
 **Input** 
 It takes in 2 commandline integers
+
 ```numUsers``` -  The total number of Peers participating in the network
 ```numTxn```   -  The total number of transactions executed in the blockchain
 
