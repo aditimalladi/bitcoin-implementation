@@ -169,6 +169,7 @@ $ mix deps.get
 
 ### Running the program:
 Max number of participants run for: 100
+
 Max number of transactions: 10
 
 ```
