@@ -56,7 +56,11 @@ defmodule Utils do
   end
 
   # recursive function to check mine the block
-  def mine_block(block_header) do
+  def mine_block(block_header, p \\ false) do
+    if p do
+      IO.puts "Mining!"
+      IO.inspect block_header
+    end
     block_hash = get_block_header_hash(block_header)
 
     if check_target(block_hash, block_header[:bits]) do
@@ -107,13 +111,13 @@ defmodule Utils do
     }
 
     tx = Map.replace(tx, :signature, sign(tx, private_key))
-    Pool.put_txn(MyPool, tx)
     tx
   end
 
   # function to generate a block from each txn
   # each block contains ONE txn
   def generate_block(txn, prev_block, coinbase_txn) do
+    # IO.inspect prev_block[:hash]
     # prev_block[:hash]
     block = %{
       :header => %{
@@ -130,7 +134,7 @@ defmodule Utils do
       :txn => txn,
       :coinbase_txn => coinbase_txn
     }
-
+    IO.inspect block
     block
   end
 
@@ -155,7 +159,8 @@ defmodule Utils do
 
     # msg = :crypto.hash(:sha256, msg)
     {:ok, signature} = tx_block[:signature] |> Base.decode16(case: :lower)
-    {_, public_key} = :ets.lookup(:data, tx_block[:from])
+    [{_, map}] = :ets.lookup(:data, tx_block[:from])
+    public_key = map[:public_key]
     :crypto.verify(:ecdsa, :sha256, msg, signature, [public_key, :secp256k1])
   end
 
@@ -180,22 +185,22 @@ defmodule Utils do
 
   # verifying the block before picking up txn
   # in the current implementation Rewards txns are signed by the miner posting the reward/ collecting reward
-  def verify_txn(tx_block) do
+  def verify_txn(tx_block, blockchain) do
     if(tx_block[:coinbase_flag]) do
       verify_sign(tx_block)
     else
       from_address = tx_block[:from]
-      {_, map} = :ets.lookup(:data, from_address)
+      [{_, map}] = :ets.lookup(:data, from_address)
       pid = map[:pid]
-      state = Peer.get_state(pid)
-      blockchain = state[:blockchain]
+      # state = Peer.get_state(pid)
+      # blockchain = state[:blockchain]
       money_available = calc_money(blockchain, from_address)
       tx_block[:amt] >= money_available && verify_sign(tx_block)
   end
 end
 
   # verify's the block
-  def verify_block(block) do
+  def verify_block(block, blockchain) do
     tx_block = block[:txn]
     # calculate and check block data hash
     if(tx_block == nil)do
@@ -209,10 +214,10 @@ end
       # now verify the current block's hash
       block_header_hash = get_block_header_hash(block_header)
       check_block_header_hash = block_header_hash == block[:hash]
-      IO.puts "Printing all the boolean values"
-      IO.inspect check_block_data_hash
-      IO.inspect check_prev_hash
-      IO.inspect check_block_header_hash
+      # IO.puts "Printing all the boolean values"
+      # IO.inspect check_block_data_hash
+      # IO.inspect check_prev_hash
+      # IO.inspect check_block_header_hash
       check_block_data_hash && check_prev_hash && check_block_header_hash
     else
       msg = hash_block_data(tx_block, block[:coinbase_txn]) |> Base.encode16(case: :lower)
@@ -222,7 +227,7 @@ end
       recalculated_prev_hash = get_block_header_hash(block[:parent])
       check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
       # now verify the txn in the block
-      check_txn = verify_txn(tx_block)
+      check_txn = verify_txn(tx_block, blockchain)
       # now verify the current block's hash
       block_header_hash = get_block_header_hash(block_header)
       check_block_header_hash = block_header_hash == block[:hash]
@@ -241,20 +246,24 @@ end
 
   # function to hash block data (calc merkle root)
   def hash_block_data(tx_block, coinbase_txn) do
-    # IO.puts "Inside the hash_blcok_data"
-    # IO.inspect tx_block
-    msg1 =
+    if (tx_block == nil) do
+      hash_txn_data(coinbase_txn)
+    else
+      # IO.puts "Inside the hash_blcok_data"
+      # IO.inspect tx_block
+      msg1 =
       tx_block[:from] <>
         tx_block[:to] <>
         Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
-    msg1= :crypto.hash(:sha256, msg1) |> Base.encode16(case: :lower)
-    msg2 = 
-      coinbase_txn[:from] <>
-        coinbase_txn[:to] <>
-        Integer.to_string(coinbase_txn[:amt]) <> Integer.to_string(coinbase_txn[:timestamp])
-    msg2 = :crypto.hash(:sha256, msg2) |> Base.encode16(case: :lower)
-    #calc and return merkle root
-    :crypto.hash(:sha256, msg1<>msg2)
+      msg1= :crypto.hash(:sha256, msg1) |> Base.encode16(case: :lower)
+      msg2 = 
+        coinbase_txn[:from] <>
+          coinbase_txn[:to] <>
+          Integer.to_string(coinbase_txn[:amt]) <> Integer.to_string(coinbase_txn[:timestamp])
+      msg2 = :crypto.hash(:sha256, msg2) |> Base.encode16(case: :lower)
+      #calc and return merkle root
+      :crypto.hash(:sha256, msg1<>msg2)
+    end
   end
 
   # FORMAT - {walletaddress - {publicKey, pid}}

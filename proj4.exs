@@ -11,6 +11,8 @@ Pool.start_link([], name: MyPool)
 # FORMAT - {walletaddress - {publicKey, pid}}
 data = :ets.new(:data, [:set, :named_table, :public])
 
+pid_stash = :ets.new(:pid_stash, [:set, :named_table, :public])
+
 #create Genesis block
 genesis_block = %{
   :header => %{
@@ -40,12 +42,22 @@ genesis_block = %{
 :ets.insert(:data, {:pids, [miner_pid, user1, user2]})
 
 Peer.mine_genesis_block(miner_pid, genesis_block)
+IO.puts "Mining Genesis Block..."
+:timer.sleep(5000)
+IO.puts "Creating Capital..."
+Peer.mint_money(user1)
+:timer.sleep(2000)
+# Peer.mint_money(user2)
+[{_, wallet_add_user2}] = :ets.lookup(:pid_stash, user2)
+:timer.sleep(2000)
+IO.puts "I am sending money now..."
+Peer.create_txn(user1, {wallet_add_user2, 50})
 
+:timer.sleep(2000)
+IO.puts "I am sending money now..."
+Peer.create_txn(user1, {wallet_add_user2, 50})
 
-
-mined_block_header = Utils.mine_block(genesis_block[:header])
-IO.inspect Utils.get_block_header_hash(mined_block_header)
-
-
+:timer.sleep(5000)
+IO.puts "Check now"
 
 :timer.sleep(1000000)
