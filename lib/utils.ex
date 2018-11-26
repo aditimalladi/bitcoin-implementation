@@ -129,7 +129,6 @@ defmodule Utils do
         :bits => "1fffffff",
         :nonce => 0
       },
-      :parent => prev_block[:header],
       :hash => nil,
       :txn => txn,
       :coinbase_txn => coinbase_txn
