@@ -9,8 +9,8 @@ In the current project the following components are working:
 * **Difficulty** - 
 Difficulty is a measure of how difficult it is to find a hash below a given target.
 The Bitcoin network has a global block difficulty. Valid blocks must have a hash below this target. Mining pools also have a pool-specific share difficulty setting a lower limit for shares.
-
-In the current project we have set the difficulty sufficiently low to be able to accomodate very fast computation. The target value is a 4 byte integer as defined below in an encoded format(as done in the bitcoin protocol)
+  
+  In the current project we have set the difficulty sufficiently low to be able to accomodate very fast computation. The target value is a   4 byte integer as defined below in an encoded format(as done in the bitcoin protocol)
 ```
  difficulty = "1fffffff"
 ```
@@ -19,7 +19,7 @@ In the current project we have set the difficulty sufficiently low to be able to
 Transactions that are executed on networks such as Bitcoin are batched together to form a block. These blocks are then included on the blockchain to form an immutable and tamper-resistant record of all transactions that are made on the network. Each block added to the blockchain must include one or more transactions, and the first transaction required in that block is called the coinbase transaction, which is also known as the generation transaction.
 Coinbase transactions are always constructed by a miner and will contain a reward for efforts expended during the proof of work mining process.
 
-In our implementation the miner adds a coinbase transaction just before mining the said block. This enables the miner to recieve the "reward coins".
+  In our implementation the miner adds a coinbase transaction just before mining the said block. This enables the miner to recieve the       "reward coins".
 
 * **Hash Calculation** - 
 All the hash calculation's internal byte order is in the Little Endian Format
