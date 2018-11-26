@@ -35,13 +35,13 @@ The hashing of the block header is done in the same manner as the Bitcoin Protoc
 * **Mining** - 
 Bitcoin Mining is a peer-to-peer computer process used to secure and verify bitcoin transactions—payments from one user to another on a decentralized network. Mining involves adding bitcoin transaction data to Bitcoin's global public ledger of past transactions. Each group of transactions is called a block. Blocks are secured by Bitcoin miners and build on top of each other forming a chain. This ledger of past transactions is called the blockchain. The blockchain serves to confirm transactions to the rest of the network as having taken place. Bitcoin nodes use the blockchain to distinguish legitimate Bitcoin transactions from attempts to re-spend coins that have already been spent elsewhere.
 
-**Mining Procedure in current project**
+**Mining Procedure in current project** - 
 The miner continously polls the transaction pool. Once the miner picks up a transaction, it creates a new block, add a new coinbase tranaction and mine the new block.
 Before proceeding to mine the new picked up transaction the miner **verifies the transaction** to ensure that the user sending the money has the minimum required resources. 
 Once this new block is mined it is then broadcasted to the entire peer network. 
 Each Peer who receives the broadcast message, verifies the block and **only then** adds it to it's own copy of the blockchan, dropping those blocks for which the verification fails.
 
-**OVERALL PROCEDURE**
+**OVERALL PROCEDURE:**
 * We have an inital Genesis Block.
   A genesis block is the first block of a block chain. We have defined the first genesis block with the traditional format used in the bitcoin
 ```
@@ -69,6 +69,84 @@ First to generate intial coins each Peer needs to mine empty blocks to collect t
 This is a way expend Compute Resources and mine coins. 
 
 * Now a randomly selected Peer, sends a random amount to one of it's peer. This would constitute creating a new transaction and therefore a new block on the blockchain.
+
+## IMPLEMENTED STRUCTURES
+
+### BLOCK STRUCTURE
+
+********************************************
+*                                          *
+*                 HEADER                   *
+*                                          *   
+********************************************
+*                                          *
+*               BLOCK HASH                 *
+*                                          *
+********************************************
+*                                          *
+*               TRANSACTION                *
+*                                          *
+********************************************
+*                                          *
+*          COINBASE TRANSACTION            *
+*                                          *
+********************************************
+
+### BLOCK HEADER STRUCTURE
+
+********************************************
+*                                          *
+*                 VERSION                  *
+*                                          *   
+********************************************
+*                                          *
+*           PREVIOUS BLOCK HASH            *
+*                                          *
+********************************************
+*                                          *
+*         MERKLE ROOT OF THE BLOCK         *
+*                                          *
+********************************************
+*                                          *
+*                 TIMESTAMP                *
+*                                          *
+********************************************
+*                                          *
+*                DIFFICULTY                *
+*                                          *
+********************************************
+*                                          *
+*                  NONCE                   *
+*                                          *
+********************************************
+
+### TRANSACTION STRUCTURE
+
+********************************************
+*                                          *
+*            FROM WALLET ADDRESS           *
+*                                          *   
+********************************************
+*                                          *
+*             TO WALLET ADDRESS            *
+*                                          *
+********************************************
+*                                          *
+*                 TIMESTAMP                *
+*                                          *
+********************************************
+*                                          *
+*                  AMOUNT                  *
+*                                          *
+********************************************
+*                                          *
+*                 SIGNATURE                *
+*                                          *
+********************************************
+*                                          *
+*               COINBASE FLAG              *
+*                                          *
+********************************************
 
 
 ## Getting Started with the Project ...
