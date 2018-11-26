@@ -60,7 +60,7 @@ Bitcoin Mining is a peer-to-peer computer process used to secure and verify bitc
  }
 ```
 
-* One Miner is initialsed, who can check and mine any pending transactions
+* One Miner is initialised, who can check and mine any pending transactions
 
 * The Miner then mines the first block/ genesis block. This is then added to the blockchain and broadcasted to any other Peers present in the network.
 
