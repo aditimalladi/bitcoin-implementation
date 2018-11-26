@@ -8,7 +8,7 @@ In the current project the following components are working:
 
 * We have an inital Genesis Block.
   A genesis block is the first block of a block chain. We have defined the first genesis block with the traditional format used in the bitcoin
-  ```
+```
   genesis_block = %{
   :header => %{
     :version => 1,
@@ -20,7 +20,9 @@ In the current project the following components are working:
   },
   :parent => nil,
   :hash => nil,
-  :txn => nil}
+  :txn => nil
+ }
+```
 
 * One Miner is initialsed, who can check and mine any pending transactions
 
@@ -39,6 +41,7 @@ This is a way expend Compute Resources and mine coins.
 It takes in 2 commandline integers
 
 ```numUsers``` -  The total number of Peers participating in the network
+
 ```numTxn```   -  The total number of transactions executed in the blockchain
 
 ### Fetch dependencies:  
@@ -64,5 +67,4 @@ Percentage | Module
    100.00% | BitcoinImplementation
     98.44% | Peer
     93.20% | Utils
------------|-----------------------
     95.43% | Total
