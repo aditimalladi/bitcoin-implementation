@@ -136,4 +136,7 @@ defmodule WorkerTest do
       assert check_hash == new_hash
     end
   end
+
+  # TODO: Test for mining a block - genesis
+  # 000027147f8b9646b441afcdfcadc1e69174f54f7615c178152614c58ef36465 (Check this output)
 end

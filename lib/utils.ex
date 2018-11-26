@@ -3,7 +3,11 @@ defmodule Utils do
 
   # takes a hex-string and reverses it's endianness
   def reverse_endian(hex_string) do
-    {:ok, binary_string} = Base.decode16(hex_string, case: :lower)
+    if(hex_string == nil)do
+      IO.inspect hex_string
+      IO.puts "WHAT THE SHIT"
+    end
+    {:ok, binary_string} = hex_string |> Base.decode16(case: :lower)
 
     binary_string
     |> :binary.bin_to_list()
@@ -14,19 +18,32 @@ defmodule Utils do
 
   # takes an integer, zero pads to 32 bits, reverse endianness and converts to hex
   def encode_integer(n) do
+    # IO.puts "Encode Integer"
+    # IO.inspect n
     <<n::signed-little-integer-size(32)>> |> Base.encode16(case: :lower)
   end
 
   # TODO: check for errors
   # calculates the block hash
   def get_block_header_hash(block_header) do
-    version = encode_integer(block_header[:version])
+    # IO.puts "In get_block _header_hash"
+    # IO.inspect block_header
+    # IO.inspect block_header[:version]
+    version = encode_integer(1)
+    # IO.puts "In #1"
+    # IO.inspect block_header[:version]
+
+    # IO.inspect block_header[:previous_block]
     previous_block = reverse_endian(block_header[:previous_block])
     merkle_root = reverse_endian(block_header[:merkle_root])
     timestamp = encode_integer(block_header[:timestamp])
+    # IO.puts "In #2"
+    # IO.inspect block_header[:timestamp]
     # bits is the difficulty
     bits = reverse_endian(block_header[:bits])
     nonce = encode_integer(block_header[:nonce])
+    # IO.puts "In #3"
+    # IO.inspect block_header[:nonce]
     # data to be hashed to get the current block hash
     message = version <> previous_block <> merkle_root <> timestamp <> bits <> nonce
     # covert the data into binary format
@@ -96,22 +113,22 @@ defmodule Utils do
 
   # function to generate a block from each txn
   # each block contains ONE txn
-  def generate_block(txn, prev_block) do
+  def generate_block(txn, prev_block, coinbase_txn) do
     # prev_block[:hash]
     block = %{
       :header => %{
         :version => 1,
         :previous_block => prev_block[:hash],
-        :merkle_root => hash_block_data(txn) |> Base.encode16(case: :lower),
+        :merkle_root => hash_block_data(txn, coinbase_txn) |> Base.encode16(case: :lower),
         :timestamp => :os.system_time(:seconds),
         # 4 leading zeroes
-        :bits => "1effffff",
+        :bits => "1f0fffff",
         :nonce => 0
       },
       :parent => prev_block[:header],
       :hash => nil,
       :txn => txn,
-      :coinbase_txn => nil
+      :coinbase_txn => coinbase_txn
     }
 
     block
@@ -119,8 +136,7 @@ defmodule Utils do
 
   # send the entire the tx block
   def sign(tx_block, private_key) do
-    msg = hash_block_data(tx_block)
-
+    msg = hash_txn_data(tx_block)
     signature =
       :crypto.sign(:ecdsa, :sha256, msg, [private_key, :secp256k1]) |> Base.encode16(case: :lower)
 
@@ -132,12 +148,12 @@ defmodule Utils do
   # TODO: Account for the case when from is = "" 
   # cause ets lookup will not work
   def verify_sign(tx_block) do
-    msg =
-      tx_block[:from] <>
-        tx_block[:to] <>
-        Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+    msg = hash_txn_data(tx_block)
+      # tx_block[:from] <>
+      #   tx_block[:to] <>
+      #   Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
 
-    msg = :crypto.hash(:sha256, msg)
+    # msg = :crypto.hash(:sha256, msg)
     {:ok, signature} = tx_block[:signature] |> Base.decode16(case: :lower)
     {_, public_key} = :ets.lookup(:data, tx_block[:from])
     :crypto.verify(:ecdsa, :sha256, msg, signature, [public_key, :secp256k1])
@@ -175,38 +191,93 @@ defmodule Utils do
       blockchain = state[:blockchain]
       money_available = calc_money(blockchain, from_address)
       tx_block[:amt] >= money_available && verify_sign(tx_block)
-    end
   end
+end
 
   # verify's the block
   def verify_block(block) do
     tx_block = block[:txn]
     # calculate and check block data hash
-    msg = hash_block_data(tx_block) |> Base.encode16(case: :lower)
-    block_header = block[:header]
-    check_block_data_hash = block_header[:merkle_root] == msg
-    # now to check previous block data hash
-    recalculated_prev_hash = get_block_header_hash(block[:parent])
-    check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
-    # now verify the txn in the block
-    check_txn = verify_txn(tx_block)
-    # now verify the current block's hash
-    block_header_hash = get_block_header_hash(block_header)
-    check_block_header_hash = block_header_hash == block[:hash]
-    check_block_data_hash && check_prev_hash && check_txn && check_block_header_hash
+    if(tx_block == nil)do
+      msg = Utils.hash_txn_data(block[:coinbase_txn]) |> Base.encode16(case: :lower)
+      block_header = block[:header]
+      check_block_data_hash = block_header[:merkle_root] == msg
+      # now to check previous block data hash
+      recalculated_prev_hash = get_block_header_hash(block[:parent])
+      check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
+      # now verify the txn in the block
+      # now verify the current block's hash
+      block_header_hash = get_block_header_hash(block_header)
+      check_block_header_hash = block_header_hash == block[:hash]
+      IO.puts "Printing all the boolean values"
+      IO.inspect check_block_data_hash
+      IO.inspect check_prev_hash
+      IO.inspect check_block_header_hash
+      check_block_data_hash && check_prev_hash && check_block_header_hash
+    else
+      msg = hash_block_data(tx_block, block[:coinbase_txn]) |> Base.encode16(case: :lower)
+      block_header = block[:header]
+      check_block_data_hash = block_header[:merkle_root] == msg
+      # now to check previous block data hash
+      recalculated_prev_hash = get_block_header_hash(block[:parent])
+      check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
+      # now verify the txn in the block
+      check_txn = verify_txn(tx_block)
+      # now verify the current block's hash
+      block_header_hash = get_block_header_hash(block_header)
+      check_block_header_hash = block_header_hash == block[:hash]
+      check_block_data_hash && check_prev_hash && check_txn && check_block_header_hash
+    end
   end
 
-  # function to hash block data (calc merkle root)
-  def hash_block_data(tx_block) do
+  def hash_txn_data(tx_block) do
     msg =
       tx_block[:from] <>
         tx_block[:to] <>
         Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
-
-    msg = :crypto.hash(:sha256, msg)
-    msg
+    
+   :crypto.hash(:sha256, msg)
   end
 
-  def broadcast() do
+  # function to hash block data (calc merkle root)
+  def hash_block_data(tx_block, coinbase_txn) do
+    # IO.puts "Inside the hash_blcok_data"
+    # IO.inspect tx_block
+    msg1 =
+      tx_block[:from] <>
+        tx_block[:to] <>
+        Integer.to_string(tx_block[:amt]) <> Integer.to_string(tx_block[:timestamp])
+    msg1= :crypto.hash(:sha256, msg1) |> Base.encode16(case: :lower)
+    msg2 = 
+      coinbase_txn[:from] <>
+        coinbase_txn[:to] <>
+        Integer.to_string(coinbase_txn[:amt]) <> Integer.to_string(coinbase_txn[:timestamp])
+    msg2 = :crypto.hash(:sha256, msg2) |> Base.encode16(case: :lower)
+    #calc and return merkle root
+    :crypto.hash(:sha256, msg1<>msg2)
   end
+
+  # FORMAT - {walletaddress - {publicKey, pid}}
+  def broadcast(block)do
+    IO.puts "Broadcast"
+    [{_, pids}] = :ets.lookup(:data, :pids)
+    # IO.puts "Keys"
+    # IO.inspect pids
+    Enum.each(pids, fn pid ->
+      IO.puts "Broadcast Repeated"
+      # {wallet_address, %{:pid => pid, :public_key => public_key}} = :ets.lookup(:data, key)
+      if(!(pid == self())) do
+        Peer.add_block(pid, block)
+      end
+    end)
+  end
+
+  def key_stream(table_name) do
+    Stream.resource(
+      fn -> :ets.first(table_name) end,
+      fn :"$end_of_table" -> {:halt, nil}
+         previous_key -> {[previous_key], :ets.next(table_name, previous_key)} end,
+      fn _ -> :ok end)
+  end
+
 end
