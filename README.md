@@ -22,7 +22,6 @@ In the current project the following components are working:
   :hash => nil,
   :txn => nil
 }
-```
 
 * One Miner is initialsed, who can check and mine any pending transactions
 
