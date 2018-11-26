@@ -14,6 +14,10 @@ defmodule Peer do
     GenServer.cast(server, {:add_block, block})
   end
 
+  def add_genesis_block(server, block) do
+    GenServer.cast(server, {:add_genesis_block, block})
+  end
+
   # TODO: replace the hash value of the block after calculating
   def mine_block(server) do
     GenServer.cast(server, {:mine_block})
@@ -75,9 +79,17 @@ defmodule Peer do
       state = Map.replace(state, :blockchain, blockchain ++ [block])
       {:noreply, state}
     else
-      IO.puts "Verifiation Failure"
+      IO.puts "!!!!!!!!!VERIFICATION FAILURE!!!!!!!!!!"
       {:noreply, state}
     end
+  end
+
+  def handle_cast({:add_genesis_block, block}, state) do
+    # IO.inspect block
+    IO.puts "Adding genesis block ...."
+    blockchain = state[:blockchain]
+    state = Map.replace(state, :blockchain, blockchain ++ [block])
+    {:noreply, state}
   end
 
   # block - is the block to be mined
@@ -114,8 +126,6 @@ defmodule Peer do
       Utils.broadcast(block)
       {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   def handle_cast({:mine_genesis_block, genesis_block}, state) do
@@ -139,9 +149,8 @@ defmodule Peer do
     state = Map.replace(state, :blockchain, blockchain)
 
     # broadcast the new mined genesis block
-    Utils.broadcast(genesis_block)
+    Utils.broadcast_genesis(genesis_block)
     allow_work()
-
     {:noreply, state}
   end
 

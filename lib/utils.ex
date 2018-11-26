@@ -126,7 +126,7 @@ defmodule Utils do
         :merkle_root => hash_block_data(txn, coinbase_txn) |> Base.encode16(case: :lower),
         :timestamp => :os.system_time(:seconds),
         # 4 leading zeroes
-        :bits => "1f0fffff",
+        :bits => "1fffffff",
         :nonce => 0
       },
       :parent => prev_block[:header],
@@ -134,7 +134,7 @@ defmodule Utils do
       :txn => txn,
       :coinbase_txn => coinbase_txn
     }
-    IO.inspect block
+    # IO.inspect block
     block
   end
 
@@ -208,7 +208,8 @@ end
       block_header = block[:header]
       check_block_data_hash = block_header[:merkle_root] == msg
       # now to check previous block data hash
-      recalculated_prev_hash = get_block_header_hash(block[:parent])
+      prev_block = List.last(blockchain)
+      recalculated_prev_hash = get_block_header_hash(prev_block[:header])
       check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
       # now verify the txn in the block
       # now verify the current block's hash
@@ -224,7 +225,8 @@ end
       block_header = block[:header]
       check_block_data_hash = block_header[:merkle_root] == msg
       # now to check previous block data hash
-      recalculated_prev_hash = get_block_header_hash(block[:parent])
+      prev_block = List.last(blockchain)
+      recalculated_prev_hash = get_block_header_hash(prev_block[:header])
       check_prev_hash = recalculated_prev_hash == block_header[:previous_block]
       # now verify the txn in the block
       check_txn = verify_txn(tx_block, blockchain)
@@ -280,6 +282,24 @@ end
       end
     end)
   end
+
+  def broadcast_genesis(block)do
+    IO.puts "Broadcast - Genesis"
+    [{_, pids}] = :ets.lookup(:data, :pids)
+    # IO.puts "Keys"
+    # IO.inspect pids
+    Enum.each(pids, fn pid ->
+      IO.puts "Broadcast Genesis Repeated"
+      # {wallet_address, %{:pid => pid, :public_key => public_key}} = :ets.lookup(:data, key)
+      if(!(pid == self())) do
+        Peer.add_genesis_block(pid, block)
+      end
+    end)
+  end
+
+
+
+
 
   def key_stream(table_name) do
     Stream.resource(
