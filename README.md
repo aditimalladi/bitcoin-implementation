@@ -70,9 +70,9 @@ This is a way expend Compute Resources and mine coins.
 
 * Now a randomly selected Peer, sends a random amount to one of it's peer. This would constitute creating a new transaction and therefore a new block on the blockchain.
 
-## IMPLEMENTED STRUCTURES
+## Implemented Structures
 
-### BLOCK STRUCTURE
+### Block Structure
 ```
 ********************************************
 *                                          *
@@ -93,7 +93,7 @@ This is a way expend Compute Resources and mine coins.
 ********************************************
 ```
 
-### BLOCK HEADER STRUCTURE
+### Block Header Structure
 
 ```
 ********************************************
@@ -123,7 +123,7 @@ This is a way expend Compute Resources and mine coins.
 ********************************************
 ```
 
-### TRANSACTION STRUCTURE
+### Transaction Structure
 
 ```
 ********************************************
