@@ -143,6 +143,9 @@ defmodule Utils do
           block[:txn][:to] == address ->
             block[:txn][:amt]
 
+          block[:coinbase_txn][:to] == address ->
+            block[:coinbase_txn][:amt]
+
           true ->
             0
         end
@@ -161,7 +164,7 @@ defmodule Utils do
       [{_, map}] = :ets.lookup(:data, from_address)
       pid = map[:pid]
       money_available = calc_money(blockchain, from_address)
-      tx_block[:amt] >= money_available && verify_sign(tx_block)
+      tx_block[:amt] <= money_available && verify_sign(tx_block)
   end
 end
 
