@@ -51,6 +51,10 @@ defmodule Peer do
      }}
   end
 
+  def init({:full_node, difficulty}) do
+    {:ok, %{:blockchain => []}}
+  end
+
   def handle_cast({:add_block, block}, state) do
     verification_block = Utils.verify_block(block, state[:blockchain])
     if(verification_block == true) do
@@ -78,6 +82,7 @@ defmodule Peer do
     else
       # generate the coinbase txn
       # sending miner's private key for the coinbase txn
+      # reward is 100
       coinbase_txn = Utils.generate_tx({"", state[:wallet_address], 100, state[:private_key]})
 
       # getting prev block to generate a new block
@@ -92,6 +97,23 @@ defmodule Peer do
       # add new block to the blockchain
       blockchain = state[:blockchain] ++ [block]
       state = Map.replace(state, :blockchain, blockchain)
+
+      # adding the new txn input to the metrics
+     [{_, num_txn}] = :ets.lookup(:metrics, :num_txn)
+     num_txn = num_txn + 1
+     :ets.insert(:metrics, {:num_txn, num_txn})
+
+     [{_, num_btc}] = :ets.lookup(:metrics, :num_btc)
+     num_btc = num_btc + 100
+     :ets.insert(:metrics, {:num_btc, num_btc})
+
+     [{_, num_btc_tx}] = :ets.lookup(:metrics, :num_btc_tx)
+     num_btc_tx = num_btc_tx + txn_picked_up[:amt]
+     :ets.insert(:metrics, {:num_btc_tx, num_btc_tx})
+
+     [{_, blockchain_length}] = :ets.lookup(:metrics, :blockchain_length)
+     blockchain_length = blockchain_length + 1
+     :ets.insert(:metrics, {:blockchain_length, blockchain_length})
 
       # broadcast the new block
       Utils.broadcast(block)
@@ -118,6 +140,15 @@ defmodule Peer do
     blockchain = state[:blockchain] ++ [genesis_block]
     state = Map.replace(state, :blockchain, blockchain)
 
+    # metrics 
+    [{_, num_btc}] = :ets.lookup(:metrics, :num_btc)
+    num_btc = num_btc + 100
+    :ets.insert(:metrics, {:num_btc, num_btc})
+
+    [{_, blockchain_length}] = :ets.lookup(:metrics, :blockchain_length)
+    blockchain_length = blockchain_length + 1
+    :ets.insert(:metrics, {:blockchain_length, blockchain_length})
+
     # broadcast the new mined genesis block
     Utils.broadcast_genesis(genesis_block)
     allow_work()
@@ -142,6 +173,15 @@ defmodule Peer do
     # add new block to the blockchain
     blockchain = state[:blockchain] ++ [block]
     state = Map.replace(state, :blockchain, blockchain)
+
+    # metrics
+    [{_, blockchain_length}] = :ets.lookup(:metrics, :blockchain_length)
+    blockchain_length = blockchain_length + 1
+    :ets.insert(:metrics, {:blockchain_length, blockchain_length})
+
+    [{_, num_btc}] = :ets.lookup(:metrics, :num_btc)
+    num_btc = num_btc + 100
+    :ets.insert(:metrics, {:num_btc, num_btc})
 
     # broadcast the new block
     Utils.broadcast(block)

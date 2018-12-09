@@ -11,6 +11,15 @@ Pool.start_link([], name: MyPool)
 # FORMAT - {walletaddress - {publicKey, pid}}
 data = :ets.new(:data, [:set, :named_table, :public])
 
+# To store metrics to pass to phx
+# FORMAT - 
+metrics = :ets.new(:metrics, [:set, :named_table, :public])
+:ets.insert(:metrics, {:num_txn, 0})
+:ets.insert(:metrics, {:num_btc, 0})
+:ets.insert(:metrics, {:num_btc_tx, 0})
+:ets.insert(:metrics, {:blockchain_length, 0})
+Metrics.start_link([], [name: MyMetrics])
+
 pid_stash = :ets.new(:pid_stash, [:set, :named_table, :public])
 
 #create Genesis block
@@ -28,6 +37,9 @@ genesis_block = %{
   :coinbase_txn => nil
 }
 
+{:ok, full_node_pid} = Peer.start_link({:full_node, difficulty}, [name: FullNode])
+
+# creating the network of peers
 list_of_users = 
 Enum.map(0..numUsers - 1, fn(user)->
   {:ok, pid} = Peer.start_link({:peer, difficulty}, [])
@@ -53,15 +65,23 @@ Enum.each(0..numTxn - 1, fn(txn)->
   user2 = Enum.random(list_of_users)
   [{_, wallet_add_user2}] = :ets.lookup(:pid_stash, user2)
   money_to_send = Enum.random(20..50)
+  :timer.sleep(1300)
   Peer.create_txn(user1, {wallet_add_user2, 34})
-  :timer.sleep(200)
 end)
 
 IO.puts "Waiting for latest blockchain propogation"
-:timer.sleep(10000)
+:timer.sleep(1300)
+
 
 miner_state = Peer.get_state(miner_pid)
+full_node_state = Peer.get_state(full_node_pid)
+full_node_length = length(full_node_state[:blockchain])
 blockchain_length = length(miner_state[:blockchain])
 
+IO.puts "Full Node length: #{full_node_length}"
 IO.puts "Blockchain length: #{blockchain_length}"
 IO.puts "#{numTxn} transactions carried out. Ciao!"
+
+
+
+:timer.sleep(100000000)

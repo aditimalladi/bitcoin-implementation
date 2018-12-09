@@ -233,6 +233,7 @@ end
 
   def broadcast(block)do
     IO.puts "Broadcasting the mined block"
+    Peer.add_block(FullNode, block)
     [{_, pids}] = :ets.lookup(:data, :pids)
     Enum.each(pids, fn pid ->
       if(!(pid == self())) do
@@ -243,6 +244,7 @@ end
 
   def broadcast_genesis(block)do
     IO.puts "Broadcasting Genesis block"
+    Peer.add_genesis_block(FullNode, block)
     [{_, pids}] = :ets.lookup(:data, :pids)
     Enum.each(pids, fn pid ->
       if(!(pid == self())) do
