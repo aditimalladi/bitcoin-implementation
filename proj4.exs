@@ -18,6 +18,7 @@ metrics = :ets.new(:metrics, [:set, :named_table, :public])
 :ets.insert(:metrics, {:num_btc, 0})
 :ets.insert(:metrics, {:num_btc_tx, 0})
 :ets.insert(:metrics, {:blockchain_length, 0})
+:ets.insert(:metrics, {:tps_data, 0})
 Metrics.start_link([], [name: MyMetrics])
 
 pid_stash = :ets.new(:pid_stash, [:set, :named_table, :public])

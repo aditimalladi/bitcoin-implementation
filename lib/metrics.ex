@@ -21,6 +21,9 @@ defmodule Metrics do
     GenServer.call(server, {:blockchain_length})
   end 
 
+  def blockchain_length(server) do
+    GenServer.call(server, {:tps_data})
+  end 
 
   def init(:ok) do
     {:ok, []}
@@ -46,6 +49,10 @@ defmodule Metrics do
     {:reply, blockchain_length, state}
   end
 
-
+  def handle_call({:tps_data}, _from, state) do
+    [{_, tps_data}] = :ets.lookup(:metrics, :tps_data)
+    :ets.insert(:metrics, {:tps_data, 0})
+    {:reply, tps_data, state}
+  end
 
 end

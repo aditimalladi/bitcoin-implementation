@@ -115,6 +115,10 @@ defmodule Peer do
      blockchain_length = blockchain_length + 1
      :ets.insert(:metrics, {:blockchain_length, blockchain_length})
 
+     [{_, tps_data}] = :ets.lookup(:metrics, :tps_data)
+     tps_data = tps_data + 1
+     :ets.insert(:metrics, {:tps_data, tps_data})
+
       # broadcast the new block
       Utils.broadcast(block)
       {:noreply, state}
