@@ -41,6 +41,7 @@ defmodule Metrics do
 
   def handle_call({:total_btc_tx}, _from, state) do
     [{_, num_btc_tx}] = :ets.lookup(:metrics, :num_btc_tx)
+    :ets.insert(:metrics, {:num_btc_tx, 0})
     {:reply, num_btc_tx, state}
   end
 
