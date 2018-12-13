@@ -21,7 +21,7 @@ defmodule Metrics do
     GenServer.call(server, {:blockchain_length})
   end 
 
-  def blockchain_length(server) do
+  def tps_data(server) do
     GenServer.call(server, {:tps_data})
   end 
 
