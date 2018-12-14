@@ -44,6 +44,14 @@ defmodule BitcoinImplementationTest do
     Pool.start_link([], name: MyPool)
     data = :ets.new(:data, [:set, :named_table, :public])
     pid_stash = :ets.new(:pid_stash, [:set, :named_table, :public])
+
+    metrics = :ets.new(:metrics, [:set, :named_table, :public])
+    :ets.insert(:metrics, {:num_txn, 0})
+    :ets.insert(:metrics, {:num_btc, 0})
+    :ets.insert(:metrics, {:num_btc_tx, 0})
+    :ets.insert(:metrics, {:blockchain_length, 0})
+    :ets.insert(:metrics, {:tps_data, 0})
+# Metrics.start_link([], [name: MyMetrics])
     numUsers = 2
     numTxn = 1
     # 2 leading zeroes

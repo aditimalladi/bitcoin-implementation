@@ -66,7 +66,7 @@ Enum.each(0..numTxn - 1, fn(txn)->
   user2 = Enum.random(list_of_users)
   [{_, wallet_add_user2}] = :ets.lookup(:pid_stash, user2)
   money_to_send = Enum.random(20..50)
-  :timer.sleep(1300 + money_to_send)
+  :timer.sleep(1300 + money_to_send )
   Peer.create_txn(user1, {wallet_add_user2, money_to_send})
 end)
 
