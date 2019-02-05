@@ -194,5 +194,5 @@ Percentage | Module
    
 ## Authors
 
-* **Aditi Malladi UFID**
-* **Suraj Kumar Reddy Thanugundla UFID**
+* **Aditi Malladi**
+* **Suraj Kumar Reddy Thanugundla**
